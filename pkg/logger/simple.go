@@ -21,6 +21,7 @@ func (l *SimpleLogger) Debug(msg string) {
     fmt.Printf("[%s] DEBUG: %s\n", time.Now().Format("2006-01-02 15:04:05"), msg)
 }
 
-func (l *SimpleLogger) Error(msg string) {
-    fmt.Printf("[%s] ERROR: %s\n", time.Now().Format("2006-01-02 15:04:05"), msg)
+// Исправленный метод Error - теперь принимает error
+func (l *SimpleLogger) Error(msg string, err error) {
+    fmt.Printf("[%s] ERROR: %s - %v\n", time.Now().Format("2006-01-02 15:04:05"), msg, err)
 }

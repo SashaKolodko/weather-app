@@ -1,15 +1,23 @@
 package main
 
 import (
+    "os"
+    
     "github.com/SashaKolodko/weather-app/internal/pkg/app/cli"
     "github.com/SashaKolodko/weather-app/pkg/logger"
 )
 
 func main() {
-    log := logger.NewSimpleLogger()
+    // Используем новый логгер из pkg/logger
+    log := logger.New()
+    
     app := cli.New(log)
     
-    if err := app.Run(); err != nil {
-        log.Error("Application failed: " + err.Error())
+    err := app.Run()
+    if err != nil {
+        log.Error("Some error", err)
+        os.Exit(1)
     }
+    
+    os.Exit(0)
 }

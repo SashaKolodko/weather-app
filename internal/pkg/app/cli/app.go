@@ -6,22 +6,29 @@ import (
     "fmt"
     "io"
     "net/http"
-    "github.com/SashaKolodko/weather-app/pkg/logger"
 )
 
-type cliApp struct {
-    logger logger.Logger
+// Определяем интерфейс логгера
+type Logger interface {
+    Info(string)
+    Debug(string)
+    Error(string, error)
 }
 
-func New(log logger.Logger) *cliApp {
+// Структура приложения с логгером
+type cliApp struct {
+    l Logger
+}
+
+// Конструктор принимает логгер
+func New(l Logger) *cliApp {
     return &cliApp{
-        logger: log,
+        l: l,
     }
 }
 
+// Основная логика приложения
 func (c *cliApp) Run() error {
-    c.logger.Info("Starting weather application")
-    
     type Current struct {
         Temp float32 `json:"temperature_2m"`
     }
@@ -32,6 +39,7 @@ func (c *cliApp) Run() error {
     
     var response Response
     
+    // Координаты (можно заменить на свои)
     params := fmt.Sprintf(
         "latitude=%f&longitude=%f&current=temperature_2m",
         53.6688,
@@ -40,36 +48,42 @@ func (c *cliApp) Run() error {
     
     url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?%s", params)
     
-    c.logger.Debug(fmt.Sprintf("Request URL: %s", url))
+    // Логируем успешную генерацию URL
+    c.l.Debug(fmt.Sprintf("url was generated successfully - %s", url))
     
     resp, err := http.Get(url)
     if err != nil {
-        c.logger.Error("Failed to get weather data")
+        c.l.Error("can't get weather data", err)
         customErr := errors.New("can't get weather data from openmeteo")
         return errors.Join(customErr, err)
     }
+    
     defer func() {
         if err := resp.Body.Close(); err != nil {
-            c.logger.Error(fmt.Sprintf("Failed to close body: %s", err.Error()))
+            c.l.Error("can't close body", err)
         }
     }()
     
     data, err := io.ReadAll(resp.Body)
     if err != nil {
-        c.logger.Error("Failed to read response data")
+        c.l.Error("can't read data from body", err)
         customErr := errors.New("can't read data from response")
         return errors.Join(customErr, err)
     }
     
+    // Логируем успешное чтение данных
+    c.l.Debug(fmt.Sprintf("data was read successfully size - %d bytes", len(data)))
+    
     if err := json.Unmarshal(data, &response); err != nil {
-        c.logger.Error("Failed to unmarshal JSON")
+        c.l.Error("can't unmarshal json data", err)
         customErr := errors.New("can't unmarshal data from response")
         return errors.Join(customErr, err)
     }
     
-    result := fmt.Sprintf("Температура воздуха - %.2f градусов цельсия", response.Curr.Temp)
-    c.logger.Info(result)
-    fmt.Println(result)
+    fmt.Printf(
+        "Температура воздуха - %.2f градусов цельсия\n",
+        response.Curr.Temp,
+    )
     
     return nil
 }
