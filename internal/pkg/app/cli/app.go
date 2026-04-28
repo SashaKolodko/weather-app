@@ -4,50 +4,47 @@ import (
     "fmt"
     
     "weather-app/internal/domain/models"
+    "weather-app/pkg/config"
 )
 
-// Logger интерфейс логгера
+
 type Logger interface {
     Info(string)
     Debug(string)
     Error(string, error)
 }
 
-// WeatherInfo интерфейс для получения информации о погоде
 type WeatherInfo interface {
     GetTemperature(float64, float64) models.TempInfo
 }
 
-// cliApp структура CLI приложения
 type cliApp struct {
-    l  Logger
-    wi WeatherInfo
+    l   Logger
+    wi  WeatherInfo
+    cfg config.Config
 }
 
-// New создает новый экземпляр CLI приложения
-func New(l Logger, wi WeatherInfo) *cliApp {
+func New(l Logger, wi WeatherInfo, cfg config.Config) *cliApp {
     return &cliApp{
-        l:  l,
-        wi: wi,
+        l:   l,
+        wi:  wi,
+        cfg: cfg,
     }
 }
 
-// Run запускает приложение
 func (c *cliApp) Run() error {
     c.l.Info("========================================")
     c.l.Info("Starting Weather Application")
     c.l.Info("========================================")
     
-    // Координаты Гродно
-    latitude := 53.6688
-    longitude := 23.8223
+    latitude := c.cfg.L.Lat
+    longitude := c.cfg.L.Long
     
+    c.l.Info(fmt.Sprintf("Using provider: %s", c.cfg.P.Type))
     c.l.Info(fmt.Sprintf("Fetching weather for coordinates: %.4f, %.4f", latitude, longitude))
     
-    // Получаем данные о погоде
     weather := c.wi.GetTemperature(latitude, longitude)
     
-    // Выводим результат
     c.l.Info("========================================")
     c.l.Info("WEATHER REPORT")
     c.l.Info("========================================")
