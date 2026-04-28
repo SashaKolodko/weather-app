@@ -1,6 +1,6 @@
 service:
   provider:
-    type: open-meteo
+    type: pogoda
   location:
     lat: 53.6688
     long: 23.8223

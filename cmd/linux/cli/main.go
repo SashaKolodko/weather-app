@@ -3,6 +3,7 @@ package main
 import (
     "os"
     
+    pogodaby "weather-app/internal/adapters/pogoda_by"
     "weather-app/internal/adapters/weather"
     "weather-app/internal/pkg/app/cli"
     "weather-app/internal/pkg/flags"
@@ -52,8 +53,13 @@ func getProvider(cfg config.Config, log *logger.Logger, cache *cache.FileCache) 
     
     switch cfg.P.Type {
     case "open-meteo":
+        log.Info("Using Open-Meteo weather provider")
         wi = weather.NewWithCache(log, cache)
+    case "pogoda":
+        log.Info("Using Pogoda.by weather provider")
+        wi = pogodaby.New(log)
     default:
+        log.Info("Unknown provider, defaulting to Open-Meteo")
         wi = weather.NewWithCache(log, cache)
     }
     

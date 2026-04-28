@@ -7,7 +7,6 @@ import (
     "weather-app/pkg/config"
 )
 
-
 type Logger interface {
     Info(string)
     Debug(string)
@@ -15,20 +14,20 @@ type Logger interface {
 }
 
 type WeatherInfo interface {
-    GetTemperature(float64, float64) models.TempInfo
+    GetTemperature(float64, float64) (models.TempInfo, error)
 }
 
 type cliApp struct {
-    l   Logger
-    wi  WeatherInfo
-    cfg config.Config
+    l    Logger
+    wi   WeatherInfo
+    conf config.Config
 }
 
-func New(l Logger, wi WeatherInfo, cfg config.Config) *cliApp {
+func New(l Logger, wi WeatherInfo, c config.Config) *cliApp {
     return &cliApp{
-        l:   l,
-        wi:  wi,
-        cfg: cfg,
+        l:    l,
+        wi:   wi,
+        conf: c,
     }
 }
 
@@ -37,13 +36,17 @@ func (c *cliApp) Run() error {
     c.l.Info("Starting Weather Application")
     c.l.Info("========================================")
     
-    latitude := c.cfg.L.Lat
-    longitude := c.cfg.L.Long
+    latitude := c.conf.L.Lat
+    longitude := c.conf.L.Long
     
-    c.l.Info(fmt.Sprintf("Using provider: %s", c.cfg.P.Type))
+    c.l.Info(fmt.Sprintf("Using provider: %s", c.conf.P.Type))
     c.l.Info(fmt.Sprintf("Fetching weather for coordinates: %.4f, %.4f", latitude, longitude))
-    
-    weather := c.wi.GetTemperature(latitude, longitude)
+  
+    weather, err := c.wi.GetTemperature(latitude, longitude)
+    if err != nil {
+        c.l.Error("Failed to get weather data", err)
+        return err
+    }
     
     c.l.Info("========================================")
     c.l.Info("WEATHER REPORT")
