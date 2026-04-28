@@ -12,10 +12,10 @@ const (
     ERROR = "ERROR"
 )
 
-// Структура логгера
+// Logger структура логгера
 type Logger struct{}
 
-// Конструктор логгера
+// New создает новый экземпляр логгера
 func New() *Logger {
     return &Logger{}
 }
@@ -30,9 +30,13 @@ func (l *Logger) Debug(msg string) {
     fmt.Println(l.formatMessage(DEBUG, msg))
 }
 
-// Error логирует ошибки - принимает string и error
+// Error логирует ошибки
 func (l *Logger) Error(msg string, err error) {
-    fmt.Println(l.formatMessage(ERROR, msg+" err - "+err.Error()))
+    if err != nil {
+        fmt.Println(l.formatMessage(ERROR, msg+" err - "+err.Error()))
+    } else {
+        fmt.Println(l.formatMessage(ERROR, msg))
+    }
 }
 
 // formatMessage форматирует сообщение лога

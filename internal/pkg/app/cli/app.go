@@ -1,89 +1,76 @@
 package cli
 
 import (
-    "encoding/json"
-    "errors"
     "fmt"
-    "io"
-    "net/http"
+    
+    "weather-app/internal/domain/models"
 )
 
-// Определяем интерфейс логгера
+// Logger интерфейс логгера
 type Logger interface {
     Info(string)
     Debug(string)
     Error(string, error)
 }
 
-// Структура приложения с логгером
+// WeatherInfo интерфейс для получения информации о погоде
+type WeatherInfo interface {
+    GetTemperature(float64, float64) models.TempInfo
+}
+
+// cliApp структура CLI приложения
 type cliApp struct {
-    l Logger
+    l  Logger
+    wi WeatherInfo
 }
 
-// Конструктор принимает логгер
-func New(l Logger) *cliApp {
+// New создает новый экземпляр CLI приложения
+func New(l Logger, wi WeatherInfo) *cliApp {
     return &cliApp{
-        l: l,
+        l:  l,
+        wi: wi,
     }
 }
 
-// Основная логика приложения
+// Run запускает приложение
 func (c *cliApp) Run() error {
-    type Current struct {
-        Temp float32 `json:"temperature_2m"`
+    c.l.Info("========================================")
+    c.l.Info("Starting Weather Application")
+    c.l.Info("========================================")
+    
+    // Координаты Гродно
+    latitude := 53.6688
+    longitude := 23.8223
+    
+    c.l.Info(fmt.Sprintf("Fetching weather for coordinates: %.4f, %.4f", latitude, longitude))
+    
+    // Получаем данные о погоде
+    weather := c.wi.GetTemperature(latitude, longitude)
+    
+    // Выводим результат
+    c.l.Info("========================================")
+    c.l.Info("WEATHER REPORT")
+    c.l.Info("========================================")
+    
+    tempMsg := fmt.Sprintf("🌡️  Температура воздуха: %.1f°C", weather.Temp)
+    fmt.Println(tempMsg)
+    c.l.Info(tempMsg)
+    
+    if weather.Humidity != 0 {
+        humidityMsg := fmt.Sprintf("💧 Влажность: %.0f%%", weather.Humidity)
+        fmt.Println(humidityMsg)
+        c.l.Info(humidityMsg)
     }
     
-    type Response struct {
-        Curr Current `json:"current"`
+    if weather.WindSpeed != 0 {
+        windMsg := fmt.Sprintf("💨 Скорость ветра: %.1f км/ч", weather.WindSpeed)
+        fmt.Println(windMsg)
+        c.l.Info(windMsg)
     }
     
-    var response Response
-    
-    // Координаты (можно заменить на свои)
-    params := fmt.Sprintf(
-        "latitude=%f&longitude=%f&current=temperature_2m",
-        53.6688,
-        23.8223,
-    )
-    
-    url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?%s", params)
-    
-    // Логируем успешную генерацию URL
-    c.l.Debug(fmt.Sprintf("url was generated successfully - %s", url))
-    
-    resp, err := http.Get(url)
-    if err != nil {
-        c.l.Error("can't get weather data", err)
-        customErr := errors.New("can't get weather data from openmeteo")
-        return errors.Join(customErr, err)
-    }
-    
-    defer func() {
-        if err := resp.Body.Close(); err != nil {
-            c.l.Error("can't close body", err)
-        }
-    }()
-    
-    data, err := io.ReadAll(resp.Body)
-    if err != nil {
-        c.l.Error("can't read data from body", err)
-        customErr := errors.New("can't read data from response")
-        return errors.Join(customErr, err)
-    }
-    
-    // Логируем успешное чтение данных
-    c.l.Debug(fmt.Sprintf("data was read successfully size - %d bytes", len(data)))
-    
-    if err := json.Unmarshal(data, &response); err != nil {
-        c.l.Error("can't unmarshal json data", err)
-        customErr := errors.New("can't unmarshal data from response")
-        return errors.Join(customErr, err)
-    }
-    
-    fmt.Printf(
-        "Температура воздуха - %.2f градусов цельсия\n",
-        response.Curr.Temp,
-    )
+    c.l.Info("========================================")
+    c.l.Info("Weather Application finished successfully")
+    c.l.Info("========================================")
     
     return nil
 }

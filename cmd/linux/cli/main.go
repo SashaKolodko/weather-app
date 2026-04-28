@@ -3,19 +3,29 @@ package main
 import (
     "os"
     
-    "github.com/SashaKolodko/weather-app/internal/pkg/app/cli"
-    "github.com/SashaKolodko/weather-app/pkg/logger"
+    "weather-app/internal/adapters/weather"
+    "weather-app/internal/pkg/app/cli"
+    "weather-app/pkg/cache"
+    "weather-app/pkg/logger"
 )
 
 func main() {
-    // Используем новый логгер из pkg/logger
     log := logger.New()
     
-    app := cli.New(log)
-    
-    err := app.Run()
+    weatherCache, err := cache.NewFileCache("")
     if err != nil {
-        log.Error("Some error", err)
+        log.Error("Failed to create cache", err)
+        os.Exit(1)
+    }
+    
+    log.Info("Using file-based cache (persists between runs)")
+    
+    weatherAdapter := weather.NewWithCache(log, weatherCache)
+    
+    app := cli.New(log, weatherAdapter)
+    
+    if err := app.Run(); err != nil {
+        log.Error("Application failed", err)
         os.Exit(1)
     }
     
