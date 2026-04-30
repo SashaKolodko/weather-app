@@ -1,0 +1,6 @@
+service:
+  provider:
+    type: open-meteo  # open-meteo or pogoda
+  location:
+    lat: 53.6688   # Latitude (Гродно)
+    long: 23.8223  # Longitude (Гродно)

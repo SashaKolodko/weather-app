@@ -1,0 +1,6 @@
+service:
+  provider:
+    type: open-meteo
+  location:
+    lat: 53.9023
+    long: 27.5618
